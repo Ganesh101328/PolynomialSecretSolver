@@ -1,0 +1,54 @@
+import java.io.FileReader;
+import java.math.BigInteger;
+import java.util.*;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+public class PolynomialSecretSolver {
+    
+    public static void main(String[] args) {
+        try {
+            JsonObject input = JsonParser.parseReader(new FileReader("input.json")).getAsJsonObject();
+            int n = input.getAsJsonObject("keys").get("n").getAsInt();
+            int k = input.getAsJsonObject("keys").get("k").getAsInt();
+            
+            List<int[]> points = new ArrayList<>();
+            for (String key : input.keySet()) {
+                if (key.equals("keys")) continue;
+                int x = Integer.parseInt(key);
+                JsonObject pointData = input.getAsJsonObject(key);
+                int base = pointData.get("base").getAsInt();
+                String value = pointData.get("value").getAsString();
+                BigInteger yDecoded = new BigInteger(value, base);
+                points.add(new int[] {x, yDecoded.intValue()});
+            }
+            
+            int constantTerm = findConstantTerm(points, k);
+            System.out.println("The constant term (c) is: " + constantTerm);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static int findConstantTerm(List<int[]> points, int k) {
+        int result = 0;
+
+        for (int i = 0; i < k; i++) {
+            int[] pointI = points.get(i);
+            int xi = pointI[0];
+            int yi = pointI[1];
+            double term = yi;
+            for (int j = 0; j < k; j++) {
+                if (i != j) {
+                    int[] pointJ = points.get(j);
+                    int xj = pointJ[0];
+                    term *= (double) xj / (xj - xi);
+                }
+            }
+            result += term;
+        }
+
+        return (int) Math.round(result);
+    }
+}
